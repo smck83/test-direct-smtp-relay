@@ -11,7 +11,7 @@ class DomainRequest(BaseModel):
 
 SMTP_TIMEOUT = 10
 MAIL_FROM = "postmaster@ehlo.email"
-
+MAIL_FROM_DOMAIN = MAIL_FROM.split("@")[1]
 
 def get_lowest_mx(domain: str):
     """Return (preference, hostname) of lowest MX, or None if no MX."""
@@ -25,6 +25,7 @@ def get_lowest_mx(domain: str):
 
 def smtp_check(domain: str):
     results = []
+    #hyphenated = domain.replace("-", "--")
     hyphenated = domain.replace(".", "-")
     host = f"{hyphenated}.mail.protection.outlook.com"
     rcpt_to = f"postmaster@{domain}"
@@ -48,7 +49,7 @@ def smtp_check(domain: str):
         if not banner.startswith("220"):
             return {"host": host, "success": False, "results": results}
 
-        resp = send(f"EHLO {domain}")
+        resp = send(f"EHLO {MAIL_FROM_DOMAIN}")
         if not resp.startswith("250"):
             return {"host": host, "success": False, "error": "EHLO failed", "results": results}
 
