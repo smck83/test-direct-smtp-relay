@@ -159,5 +159,3 @@ MIT
 
 Created by **smck83** to help security teams validate Microsoft 365 tenant hardening and prevent MX-bypass attacks.
 
-```
-
