@@ -1,12 +1,11 @@
 # ✅ **README.md**
 
-````markdown
 # Direct SMTP RCPT Tester for Microsoft 365
 A FastAPI micro-service that performs a direct SMTP handshake against Microsoft 365’s `*.mail.protection.outlook.com` infrastructure to determine whether inbound mail can bypass published MX records.
 
 This allows security teams, email admins, and consultants to quickly verify if a Microsoft 365 tenant is properly locked down to reject unsolicited direct SMTP delivery.
 
----
+
 
 ## ✅ What This Tool Does
 ✔ Resolves MX records for a target domain  
@@ -23,7 +22,7 @@ This allows security teams, email admins, and consultants to quickly verify if a
 > ✅ **If Microsoft 365 rejects RCPT → tenant is secure (MX-bypass blocked)**  
 > ❌ **If Microsoft 365 accepts RCPT → tenant may be vulnerable to MX-bypass**
 
----
+
 
 ## ✅ Example Output (Secure Tenant)
 
@@ -46,7 +45,7 @@ This allows security teams, email admins, and consultants to quickly verify if a
 }
 ````
 
----
+
 
 ## ✅ Example Output (Unsecure Tenant)
 
@@ -69,7 +68,7 @@ This allows security teams, email admins, and consultants to quickly verify if a
 }
 ```
 
----
+
 
 ## ✅ API Endpoints
 
@@ -90,7 +89,7 @@ Returns JSON with:
 * Full SMTP transcript
 * Skipped notice when Microsoft MX detected
 
----
+
 
 ## ✅ Skipping Logic (MX Detection)
 
@@ -110,7 +109,7 @@ Force override:
 /checkSmtp?domain=example.com&forceCheck=1
 ```
 
----
+
 
 ## ✅ Docker
 
@@ -133,7 +132,7 @@ services:
     restart: unless-stopped
 ```
 
----
+
 
 ## ✅ Intended Use Cases
 
@@ -143,7 +142,6 @@ services:
 ✔ Demonstrate MX-bypass attack paths
 ✔ Confirm if a tenant rejects unauthorized direct SMTP inbound mail
 
----
 
 ## ✅ Security Notes
 
@@ -156,8 +154,6 @@ services:
 ## ✅ License
 
 MIT
-
----
 
 ## ✅ Author
 
