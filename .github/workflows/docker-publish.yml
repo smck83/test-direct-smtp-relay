@@ -1,0 +1,86 @@
+name: Build and push image
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  # Weekly rebuild so Debian and Python base-image security fixes are picked up
+  schedule:
+    - cron: "0 18 * * 0"   # Sunday 18:00 UTC = Monday morning Sydney
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/smck83/test-direct-smtp-relay
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build once and load locally so it can be tested before publishing.
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          pull: true
+          tags: smtp-checker:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Fail before anything is pushed if the API doesn't start and answer.
+      - name: Smoke test
+        run: |
+          docker run -d --name smtp-test -p 8000:8000 smtp-checker:test
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://localhost:8000/openapi.json; then
+              echo "API is up"; break
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' smtp-test)" != "true" ]; then
+              echo "Container exited"; docker logs smtp-test; exit 1
+            fi
+            if [ "$i" = 30 ]; then echo "API never came up"; docker logs smtp-test; exit 1; fi
+            sleep 2
+          done
+          # Input validation still works (no dot -> 400)
+          test "$(curl -s -o /dev/null -w '%{http_code}' 'http://localhost:8000/checkSmtp?domain=invalid')" = 400
+          # Runs as a non-root user
+          test "$(docker exec smtp-test id -u)" != 0
+          docker rm -f smtp-test
+
+      - name: Scan for HIGH/CRITICAL vulnerabilities with a fix available
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.2 \
+            image --quiet --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+            --exit-code 1 smtp-checker:test
+
+      # Pull requests stop here; main, manual and scheduled runs publish.
+      - name: Push
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
