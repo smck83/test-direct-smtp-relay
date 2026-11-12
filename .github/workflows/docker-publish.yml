@@ -35,7 +35,7 @@ jobs:
 
       # Build once and load locally so it can be tested before publishing.
       - name: Build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
@@ -73,7 +73,7 @@ jobs:
       # Pull requests stop here; main, manual and scheduled runs publish.
       - name: Push
         if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
