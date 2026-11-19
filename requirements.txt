@@ -1,5 +1,5 @@
 # Direct dependencies
-fastapi==0.162.5
+fastapi==0.163.1
 uvicorn[standard]==0.54.0
 dnspython==2.9.2
 
